@@ -14,20 +14,40 @@ shinyUI(fluidPage(
 
     # Application title
     titlePanel("Old Faithful Geyser Data"),
-
-    # Sidebar with a slider input for number of bins
-    sidebarLayout(
-        sidebarPanel(
-            sliderInput("bins",
-                        "Number of bins:",
-                        min = 1,
-                        max = 50,
-                        value = 30)
+    navbarPage("Let's get started",
+        tabPanel("Step 1",
+             # Sidebar with a slider input for number of bins
+             sidebarLayout(
+                 sidebarPanel(
+                     sliderInput("bins",
+                                 "Number of bins:",
+                                 min = 1,
+                                 max = 50,
+                                 value = 30)
+                 ),
+                 
+                 # Show a plot of the generated distribution
+                 mainPanel(
+                     plotOutput("distPlot")
+                 )
+             )
         ),
-
-        # Show a plot of the generated distribution
-        mainPanel(
-            plotOutput("distPlot")
+        tabPanel("Step 2",
+                 # Sidebar with a slider input for number of bins
+                 sidebarLayout(
+                     sidebarPanel(
+                         sliderInput("bins",
+                                     "Number of bins:",
+                                     min = 1,
+                                     max = 50,
+                                     value = 30)
+                     ),
+                     
+                     # Show a plot of the generated distribution
+                     mainPanel(
+                         plotOutput("distPlot")
+                     )
+                 )
         )
     )
 ))

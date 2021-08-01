@@ -9,6 +9,8 @@
 
 library(shiny)
 
+energyData <- read_csv("energy_efficiency.csv")
+
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
 
