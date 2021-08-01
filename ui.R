@@ -9,43 +9,57 @@
 
 library(shiny)
 
+source('helpers.R')
+
 # Define UI for application that draws a histogram
 shinyUI(fluidPage(
 
     # Application title
-    titlePanel("Old Faithful Geyser Data"),
-    navbarPage("Let's get started",
-        tabPanel("Step 1",
-             # Sidebar with a slider input for number of bins
-             sidebarLayout(
-                 sidebarPanel(
-                     sliderInput("bins",
-                                 "Number of bins:",
-                                 min = 1,
-                                 max = 50,
-                                 value = 30)
-                 ),
+    titlePanel("Energy Efficiency"),
+    navbarPage("Navigate",
+        tabPanel("About",
                  
-                 # Show a plot of the generated distribution
-                 mainPanel(
-                     plotOutput("distPlot")
-                 )
-             )
+                 https://archive.ics.uci.edu/ml/datasets/Energy+efficiency
         ),
-        tabPanel("Step 2",
+        tabPanel("Data",
                  # Sidebar with a slider input for number of bins
                  sidebarLayout(
                      sidebarPanel(
-                         sliderInput("bins",
-                                     "Number of bins:",
-                                     min = 1,
-                                     max = 50,
-                                     value = 30)
+                         sliderInput("SARange", "Surface Area",
+                                     min = floor(min(energyData$surface_area)),
+                                     max = ceiling(max(energyData$surface_area)),
+                                     value = c(quantile(energyData$surface_area)[2],
+                                               quantile(energyData$surface_area)[4]),
+                                     step = 30
+                         ),
+                         sliderInput("WARange", "Wall Area",
+                                     min = floor(min(energyData$wall_area)),
+                                     max = ceiling(max(energyData$wall_area)),
+                                     value = c(quantile(energyData$wall_area)[2],
+                                               quantile(energyData$wall_area)[4]),
+                                     step = 20
+                         ),
+                         sliderInput("RARange", "Roof Area",
+                                     min = floor(min(energyData$roof_area)),
+                                     max = ceiling(max(energyData$roof_area)),
+                                     value = c(quantile(energyData$roof_area)[2],
+                                               quantile(energyData$roof_area)[4]),
+                                     step = 10
+                         ),
+                         checkboxGroupInput("orientationChoices",
+                                            "Orientation",
+                                            choices = c(2, 3, 4, 5),
+                                            selected = c(2, 3, 4, 5)
+                         ),
+                         h4("Download Subset"),
+                         downloadButton("downloadSubset", "Download"),
+                         h4("Download Full Dataset"),
+                         downloadButton("downloadFull", "Download")
                      ),
                      
                      # Show a plot of the generated distribution
                      mainPanel(
-                         plotOutput("distPlot")
+                         dataTableOutput("tbl")
                      )
                  )
         )

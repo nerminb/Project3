@@ -9,20 +9,36 @@
 
 library(shiny)
 
-energyData <- read_csv("energy_efficiency.csv")
+source('helpers.R')
 
 # Define server logic required to draw a histogram
-shinyServer(function(input, output) {
+shinyServer(function(input, output, session) {
 
-    output$distPlot <- renderPlot({
+    subsetSA <- reactive({
+        subsetEnergy <- subset(energyData,
+                               surface_area >= input$SARange[1] &
+                               surface_area <= input$SARange[2] &
+                               wall_area >= input$WARange[1] &
+                               wall_area <= input$WARange[2] &
+                               roof_area >= input$RARange[1] &
+                               roof_area <= input$RARange[2] &
+                               orientation %in% input$orientationChoices)
 
-        # generate bins based on input$bins from ui.R
-        x    <- faithful[, 2]
-        bins <- seq(min(x), max(x), length.out = input$bins + 1)
-
-        # draw the histogram with the specified number of bins
-        hist(x, breaks = bins, col = 'darkgray', border = 'white')
-
+        subsetEnergy
     })
-
+    
+    output$tbl <- renderDataTable({
+        subsetSA()
+    })
+    # download data as csv
+    output$downloadSubset <- downloadHandler('energy_efficiency_subset.csv',
+                                              content = function(con) {
+                                                write.csv(subsetSA(), con)
+                                              }
+    )
+    output$downloadFull <- downloadHandler('energy_efficiency.csv',
+                                            content = function(con) {
+                                                write.csv(energyData, con)
+                                            }
+    )
 })
