@@ -18,48 +18,73 @@ shinyUI(fluidPage(
     titlePanel("Energy Efficiency"),
     navbarPage("Navigate",
         tabPanel("About",
-                 
-                 https://archive.ics.uci.edu/ml/datasets/Energy+efficiency
+                 p("https://archive.ics.uci.edu/ml/datasets/Energy+efficiency")
         ),
         tabPanel("Data",
-                 # Sidebar with a slider input for number of bins
+                 downloadButton("downloadFull", "Download Full Dataset"),
+                 br(),
+                 p("\n\n"),
+                 dataTableOutput("energyDataTable")
+        ),
+        tabPanel("Data Exploration",
                  sidebarLayout(
                      sidebarPanel(
-                         sliderInput("SARange", "Surface Area",
-                                     min = floor(min(energyData$surface_area)),
-                                     max = ceiling(max(energyData$surface_area)),
-                                     value = c(quantile(energyData$surface_area)[2],
-                                               quantile(energyData$surface_area)[4]),
-                                     step = 30
-                         ),
-                         sliderInput("WARange", "Wall Area",
-                                     min = floor(min(energyData$wall_area)),
-                                     max = ceiling(max(energyData$wall_area)),
-                                     value = c(quantile(energyData$wall_area)[2],
-                                               quantile(energyData$wall_area)[4]),
-                                     step = 20
-                         ),
-                         sliderInput("RARange", "Roof Area",
-                                     min = floor(min(energyData$roof_area)),
-                                     max = ceiling(max(energyData$roof_area)),
-                                     value = c(quantile(energyData$roof_area)[2],
-                                               quantile(energyData$roof_area)[4]),
-                                     step = 10
-                         ),
-                         checkboxGroupInput("orientationChoices",
-                                            "Orientation",
-                                            choices = c(2, 3, 4, 5),
-                                            selected = c(2, 3, 4, 5)
-                         ),
-                         h4("Download Subset"),
-                         downloadButton("downloadSubset", "Download"),
-                         h4("Download Full Dataset"),
-                         downloadButton("downloadFull", "Download")
+                         selectInput("plots",
+                                     "Choose Summary/Plot",
+                                     choices = c("Summary Statistics" = "summary_stats",
+                                                 "Scatter Plot" = "scatter",
+                                                 "Box Plot" = "box"),
+                                     selected = NULL)
+                         
                      ),
-                     
-                     # Show a plot of the generated distribution
+                     # show chosen plot or summary
                      mainPanel(
-                         dataTableOutput("tbl")
+                         conditionalPanel(
+                             condition = "input.plots == 'summary_stats'",
+                             tableOutput("summaryStats")
+                         ),
+                         conditionalPanel(
+                             condition =  "input.plots == 'scatter'",
+                             varSelectInput("scatterVariable", "Variable:", energyData[, c(1:4)]),
+                             plotOutput("scatterPlot")
+                         ),
+                         conditionalPanel(
+                             condition =  "input.plots == 'box'",
+                             sliderInput("HLRange", "Toggle Heating Load",
+                                         min = floor(min(energyData$heating_load)),
+                                         max = ceiling(max(energyData$heating_load)),
+                                         value = c(quantile(energyData$heating_load)[2],
+                                                   quantile(energyData$heating_load)[4]),
+                                         step = 2
+                             ),
+                             varSelectInput("boxPlotVariable", "Variable:", energyData[, c(5, 10)]),
+                             plotOutput("boxPlot")
+                         )
+                     )
+                 )
+        ),
+        tabPanel("Modeling",
+                 tabsetPanel(
+                     tabPanel("Modeling Info",
+
+                              
+                     ),
+                     tabPanel("Model Fitting",
+                              sidebarLayout(
+                                  sidebarPanel(
+                                      sliderInput("trainSize", "Choose Train Set Size:",
+                                                  min = 0, max = 1, value = 0.7),
+                                      numericInput("cvFolds", "Number of Cross-Validation Folds",
+                                                   value = 10),
+                                      actionButton("fit_model", "Fit Model")
+                                  ),
+                                  mainPanel(
+                                      verbatimTextOutput("modeling")
+                                  )
+                              )
+                     ),
+                     tabPanel("Prediction",
+                              p("srgafe")
                      )
                  )
         )
