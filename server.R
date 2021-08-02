@@ -71,6 +71,24 @@ shinyServer(function(input, output, session) {
     })
     
     # Modeling
+    
+    # About mathJax formulas
+    output$MLRFormula <- renderUI({
+        withMathJax(
+            helpText('Multiple Linear Regression equation:
+                     $$
+                     y_i = \\beta_0\\ + \\beta_1x_{i1} + \\beta_2x_{i2} + ... + \\beta_px_{ip} + 
+                     \\epsilon\\
+                     $$'
+            ),
+            helpText('$$y_i = response$$'),
+            helpText('$$x_i = predictor$$'),
+            helpText('$$\\beta_0 = y-intercept$$'),
+            helpText('$$\\beta_p = slope$$'),
+            helpText('$$\\epsilon = error$$')
+         )
+    })
+    
     values <- reactiveValues()
     
     observeEvent(input$fit_model,{

@@ -13,9 +13,8 @@ source('helpers.R')
 
 # Define UI for application that draws a histogram
 shinyUI(fluidPage(
-
     # Application title
-    titlePanel("Energy Efficiency"),
+    titlePanel("Energy Efficiency in Buildings"),
     navbarPage("Navigate",
         tabPanel("About",
                  h3("Purpose of App"),
@@ -31,7 +30,7 @@ shinyUI(fluidPage(
                  a("Click here to view more information and the source of the data",
                    href = "https://archive.ics.uci.edu/ml/datasets/Energy+efficiency",
                    target = "_blank"),
-                 br(),
+                 br(),br(),
                  p("The dataset contains 8 building parameters (predictor variables). They are:
                  Surface Area, Wall Area, Roof Area, Overall Height, Orientation, Glazing Area,
                  and Glazing Area Distribution. The response variables are Heating Load and Cooling
@@ -53,7 +52,7 @@ shinyUI(fluidPage(
                    based on user inputs. This tab also contains background information on each model
                    being used."),
                  img(width = "500px",
-                     src = "https://github.com/nerminb/Project3/blob/main/heading-load-picture.png"),
+                     src = "https://github.com/nerminb/Project3/blob/main/heating-load-picture.png?raw=true"),
                  p("(Picture is from: https://www.finehomebuilding.com/2019/02/04/choose-right-size-heating-cooling-system)")
         ),
         tabPanel("Data",
@@ -101,8 +100,53 @@ shinyUI(fluidPage(
         tabPanel("Modeling",
                  tabsetPanel(
                      tabPanel("Modeling Info",
-
-                              
+                              withMathJax(),
+                              h3("Multiple Linear Regression"),
+                              p("Multiple linear regression models are statistical techniques used to 
+                              fit the relationship between predictor variables and response
+                              variables.  We can also use fitted multiple regression models to predict
+                              future values. Linear regression models can contain multiple variables
+                              that may interact with each other - we can add interaction terms to
+                              improve linear regression models."),
+                              uiOutput("MLRFormula"),
+                              p("A benefit to multiple linear regression models is that they are
+                                simple to model compared to other more complex models. We also have
+                                the ability to easily see the relative influence each predictor
+                                variables has on the response variable. This means multiple linear
+                                regression models are easy to interpret. Another advantage is that 
+                                modeling multiple linear regression is very fast because it doesn't
+                                involve too many calculations. This is especially useful if the dataset
+                                is too large. Several drawbacks include: MLR assumes homoskedacity,
+                                is too simplistic when dealing with complex real-world data, and
+                                tends to be affected by outliers easily."),
+                              h3("Regression Tree"),
+                              p("Tree-based methods involve splitting predictor spaces into regions,
+                                and there are different predictions for each region. We use a
+                                classification tree if we want to classify membership
+                                to specific groups. We use a regression tree if we want to predict a
+                                continuous response - we typically use mean of observations as
+                                prediction for a given region. In this app, we are using a boosted tree
+                                classification. Boosting trees grow sequentially, with each subsequent
+                                tree grown on a modified version of the original data. Predictions
+                                update as trees grow. The trees train slowly so there is no overfit.
+                                A benefit to boosted trees is it curbs over-fitting. Regression trees
+                                are simple to understand and it is easy to interpret output. Predicors
+                                don't need to be scaled. There is built-in variable selection with this
+                                method and there are no statistical assumptions necessary. A drawback
+                                is that small changes in the data can change the tree by a lot. Another
+                                drawback is that greedy algorithms are necessary and we often need to
+                                prune."),
+                              h3("Random Forest"),
+                              p("Random forests extend the idea of bagging. With random forests
+                                we create multiple trees from bootstrap samples and then average the
+                                results. A benefit to this is it improves predictions because random
+                                forests use a random subset of predictors for each bootstrap, so the
+                                trees are more independent. If there is a strong predictor, each
+                                bootstrap tree would likely use it for the 1st split, making the bagged
+                                trees predictions more correlated as well. The biggest drawback to
+                                random forests is that we lose interpretability as the model gets more
+                                complex. While we gain in prediction, we lose in interpretability."),
+                              br(), br(), br()
                      ),
                      tabPanel("Model Fitting",
                               sidebarLayout(
