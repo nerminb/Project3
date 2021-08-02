@@ -2,7 +2,7 @@
 
 ## Energy Efficiency in Buildings
 
-This app analyzes energy efficiency in buildings using a host of building parameters. The app is broken up by tabs: About, Data, Data Exploration, and Modeling. This interactive app will allow you to scroll through and filter the data being used, download the data in CSV format, plot several numerical and graphical summaries and plots of the data, fit the data based on several linear and ensemble models, and predict the heating load (the amount of heat energy that would need to be added to a space to maintain the temperature in an acceptable range). This app also contains information background information, benefits, and drawbacks of the different types of linear regression and ensemble models being used. The source and description of the data can be found in the About tab. 
+This app analyzes energy efficiency in buildings using a host of building parameters. The app is broken up by tabs: About, Data, Data Exploration, and Modeling. The source and description of the data being used can be found in the About tab of the app. This interactive app will allow you to scroll through and filter the data being used, download the data in CSV format, plot several numerical and graphical summaries and plots of the data, fit the data based on several linear and ensemble models, and predict the heating load (the amount of heat energy that would need to be added to a space to maintain the temperature in an acceptable range). You are able to toggle which variable you want to use when fitting the model. This app contains useful background information, definitions, benefits, and drawbacks of the different types of linear regression and ensemble models being used.
 
 ### Install Packages
 
