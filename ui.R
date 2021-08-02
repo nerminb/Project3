@@ -151,11 +151,15 @@ shinyUI(fluidPage(
                      tabPanel("Model Fitting",
                               sidebarLayout(
                                   sidebarPanel(
+                                      h3("Options"),
                                       sliderInput("trainSize", "Choose Train Set Size:",
                                                   min = 0, max = 1, value = 0.7),
                                       numericInput("cvFolds", "Number of Cross-Validation Folds",
                                                    value = 10),
-                                      checkboxGroupInput("varsToUse", "Choose Variables for Model",
+                                      checkboxGroupInput("varsToUse",
+                                                         "Choose Variables for Model. All variables
+                                                         selected by default. Un-check variables you
+                                                         do not want to use in the model.",
                                                          choices = c("relative_compactness",
                                                                      "surface_area",
                                                                      "wall_area",
@@ -176,6 +180,11 @@ shinyUI(fluidPage(
                                       actionButton("fit_model", "Fit Model")
                                   ),
                                   mainPanel(
+                                      h3("Model Fitting"),
+                                      hr(),
+                                      p("Note: The NULL values are placeholders until model fitting
+                                        is complete. Model fitting may take up to a minute."),
+                                      hr(),
                                       h4("Linear Regression Model Fit Result Summary"),
                                       verbatimTextOutput("lmFitResults"),
                                       h4("Boosted Tree Model Fit Result Summary"),
@@ -193,8 +202,6 @@ shinyUI(fluidPage(
                               sidebarLayout(
                                   sidebarPanel(
                                       h3("Options"),
-                                      p("Note: Fit models in previous tab before predicting."),
-                                      br(),
                                       selectInput("modelPredChoice",
                                                    "Choose Model",
                                                    choices = c("Linear Regression",
@@ -242,6 +249,10 @@ shinyUI(fluidPage(
                                   ),
                                   mainPanel(
                                       h3("Heating Load Prediction"),
+                                      hr(),
+                                      p("Note: Fit models in previous tab before trying to predict."),
+                                      p("Predicted heating load value will display below."),
+                                      hr(),
                                       textOutput("prediction")
                                   )
                               )

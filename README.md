@@ -24,6 +24,5 @@ library(DT)
 ### Run below code in RStudio to run this app
 
 ```{r}
-library(shiny)
 shiny::runGitHub("Project3", "nerminb", ref="main")
 ```
