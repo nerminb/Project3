@@ -70,8 +70,8 @@ shinyServer(function(input, output, session) {
                  y = "Heating Load")
     })
     
-    
-    fitModel <- eventReactive(input$fit_model,{
+    values <- reactiveValues()
+    observeEvent(input$fit_model,{
         set.seed(1)
         energyIndex <- createDataPartition(energyData$heating_load, p = input$trainSize, list = FALSE)
         energyTrain <- energyData[energyIndex, ]
@@ -83,27 +83,73 @@ shinyServer(function(input, output, session) {
         # Set seed for reproducible
         set.seed(5)
         
+        modelVars <- paste(input$varsToUse, collapse = "+")
+        modelFormula <- as.formula(paste('heating_load ~', modelVars))
+        
         # Linear Regression Model
-        lmFit <- train(heating_load ~ .,
+        lmFit <- train(modelFormula,
                        data = select(energyTrain, -c(compactness_level)),
                        method = "lm",
                        preProcess = c("center", "scale"),
                        trControl = trctrl)
-        print(lmFit)
-        print("-------------------------------")
+        
         # Boosted Tree Model
         set.seed(5)
-        boostFit <- train(heating_load ~.,
-                          select(energyTrain, -c(compactness_level)),
+        boostFit <- train(modelFormula,
+                          data = select(energyTrain, -c(compactness_level)),
                           method = "gbm",
                           trControl = trctrl,
                           preProcess = c("center", "scale"),
                           verbose = FALSE)
-        print(boostFit)
+        
+        # Random Forest Model
+        set.seed(5)
+        # Fit the random forest model on training set
+        rfFit <- train(modelFormula,
+                       data = select(energyTrain, -c(compactness_level)),
+                       method = "rf",
+                       preProcess = c("center", "scale"),
+                       trControl = trctrl)
+        
+        # predict on test set
+        predfitLm <- predict(lmFit, newdata = energyTest)
+        predfitBoost <- predict(boostFit, newdata = energyTest)
+        predfitRF <- predict(rfFit, newdata = energyTest)
+        
+        # evaluate the model performances by comparing the testing RMSE values
+        testResults <- rbind(postResample(predfitLm, energyTest$heating_load),
+                             postResample(predfitBoost, energyTest$heating_load),
+                             postResample(predfitRF, energyTest$heating_load))
+        testResults <- data.frame(Model = c("Linear Regression", "Boosted Tree", "Random Forest"),
+                                  testResults)
+        row.names(testResults) <- c("Linear Regression",
+                                    "Boosted Tree",
+                                    "Random Forest")
+
+        # Find the best model with lowest RMSE value
+        bestModel <- rownames(testResults[testResults$RMSE == min(testResults$RMSE), ])
+        
+        values$lmFit <- lmFit
+        values$boostFit <- boostFit
+        values$rfFit <- rfFit
+        values$testResults <- testResults
+        values$bestModel <- bestModel
     })
     
-    output$modeling <- renderPrint({
-        fitModel()
+    output$lmFitResults <- renderPrint({
+        values$lmFit
     })
-    
+    output$boostFitResults <- renderPrint({
+        values$boostFit
+    })
+    output$rfFitResults <- renderPrint({
+        values$rfFit
+    })
+    output$fitStatistics <- renderTable({
+        values$testResults[] <- lapply(values$testResults, format, decimal.mark = ",", digits = 5)
+        values$testResults
+    })
+    output$finalModel <- renderPrint({
+        values$bestModel
+    })
 })

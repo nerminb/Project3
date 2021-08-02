@@ -76,10 +76,37 @@ shinyUI(fluidPage(
                                                   min = 0, max = 1, value = 0.7),
                                       numericInput("cvFolds", "Number of Cross-Validation Folds",
                                                    value = 10),
+                                      checkboxGroupInput("varsToUse", "Choose Variables for Model",
+                                                         choices = c("relative_compactness",
+                                                                     "surface_area",
+                                                                     "wall_area",
+                                                                     "roof_area",
+                                                                     "overall_height",
+                                                                     "orientation",
+                                                                     "glazing_area",
+                                                                     "glazing_area_dist"),
+                                                         selected = c("relative_compactness",
+                                                                     "surface_area",
+                                                                     "wall_area",
+                                                                     "roof_area",
+                                                                     "overall_height",
+                                                                     "orientation",
+                                                                     "glazing_area",
+                                                                     "glazing_area_dist")
+                                                         ),
                                       actionButton("fit_model", "Fit Model")
                                   ),
                                   mainPanel(
-                                      verbatimTextOutput("modeling")
+                                      h4("Linear Regression Model Fit Result Summary"),
+                                      verbatimTextOutput("lmFitResults"),
+                                      h4("Boosted Tree Model Fit Result Summary"),
+                                      verbatimTextOutput("boostFitResults"),
+                                      h4("Random Forest Fit Result Summary"),
+                                      verbatimTextOutput("rfFitResults"),
+                                      h4("Fit Statistics For Each Model Comparing to Test Set"),
+                                      tableOutput("fitStatistics"),
+                                      h4("Best Model To Use"),
+                                      verbatimTextOutput("finalModel"),
                                   )
                               )
                      ),
