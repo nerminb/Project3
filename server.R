@@ -190,11 +190,11 @@ shinyServer(function(input, output, session) {
         pred_values[cols] <- lapply(pred_values[cols], factor)
         
         if (input$modelPredChoice == "Linear Regression") {
-            predResult <- predict(lmFit, newdata = pred_values)
+            predResult <- predict(values$lmFit, newdata = pred_values)
         } else if (input$modelPredChoice == "Boosted Tree") {
-            predResult <- predict(boostFit, newdata = pred_values)
+            predResult <- predict(values$boostFit, newdata = pred_values)
         } else if (input$modelPredChoice == "Random Forest") {
-            predResult <- predict(rfFit, newdata = pred_values)
+            predResult <- predict(values$rfFit, newdata = pred_values)
         }
         values$predResult <- predResult
     })
