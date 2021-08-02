@@ -70,7 +70,9 @@ shinyServer(function(input, output, session) {
                  y = "Heating Load")
     })
     
+    # Modeling
     values <- reactiveValues()
+    
     observeEvent(input$fit_model,{
         set.seed(1)
         energyIndex <- createDataPartition(energyData$heating_load, p = input$trainSize, list = FALSE)
@@ -136,6 +138,7 @@ shinyServer(function(input, output, session) {
         values$bestModel <- bestModel
     })
     
+    # Output Modeling Results and Comparisons
     output$lmFitResults <- renderPrint({
         values$lmFit
     })
@@ -151,5 +154,33 @@ shinyServer(function(input, output, session) {
     })
     output$finalModel <- renderPrint({
         values$bestModel
+    })
+    
+    # Output Predictions
+    observeEvent(input$predict_values, {
+        pred_values <- data.frame(
+            relative_compactness = input$relative_compactnessPred,
+            surface_area = input$surface_areaPred,
+            wall_area = input$wall_areaPred,
+            roof_area = input$roof_areaPred,
+            overall_height = as.numeric(input$overall_heightPred),
+            orientation = input$orientationPred,
+            glazing_area = as.numeric(input$glazing_areaPred),
+            glazing_area_dist = input$glazing_area_distPred
+        )
+        cols <- c("orientation", "glazing_area_dist")
+        pred_values[cols] <- lapply(pred_values[cols], factor)
+        
+        if (input$modelPredChoice == "Linear Regression") {
+            predResult <- predict(lmFit, newdata = pred_values)
+        } else if (input$modelPredChoice == "Boosted Tree") {
+            predResult <- predict(boostFit, newdata = pred_values)
+        } else if (input$modelPredChoice == "Random Forest") {
+            predResult <- predict(rfFit, newdata = pred_values)
+        }
+        values$predResult <- predResult
+    })
+    output$prediction <- renderText({
+        values$predResult
     })
 })
