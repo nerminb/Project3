@@ -5,6 +5,7 @@ library(dplyr)
 library(ggplot2)
 library(caret)
 library(DT)
+library(corrplot)
 
 # read data
 energyData <- read_csv("energy_efficiency.csv")
