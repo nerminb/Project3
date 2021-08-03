@@ -1,78 +1,119 @@
-library(shiny)
-
+# include code from external file
 source('helpers.R')
 
-# Define server logic required to draw a histogram
 shinyServer(function(input, output, session) {
-
+    
+    # -------------------------------- Data  -----------------------------------
+    # data table with ability to toggle parameter values to subset data
     output$energyDataTable <- renderDataTable(
         datatable(energyData,
                   filter = "top"),
         server = FALSE
     )
-    output$filtered_row <- 
-        renderPrint({
-            input[["dt_rows_all"]]
-        })
-    output$download_filtered <- 
-        downloadHandler(
-            filename = "Filtered Data.csv",
-            content = function(file){
-                write.csv(energyData[input[["dt_rows_all"]], ],
-                          file)
-            }
-        )
+
+    # download full dataset code
     output$downloadFull <- downloadHandler('energy_efficiency.csv',
-                                            content = function(con) {
+                                           content = function(con) {
                                                 write.csv(energyData, con)
                                             }
     )
-    # Data Exploration: Summary Statistics
-    output$summaryStats <- renderTable({
-        # Subset by columns we want to analyze
+    
+    # ---------------------------- Data Exploration  ---------------------------
+    
+    # initialize reactive values to use later
+    plots <- reactiveValues()
+    ranges <- reactiveValues(x = NULL, y = NULL)
+    
+    observeEvent(input$plotRun, {
+        # subset by columns we want to analyze
         energyStats <- energyData[ , c("relative_compactness",
                                        "surface_area",
                                        "wall_area",
                                        "roof_area",
                                        "heating_load")]
         
-        # Function for summary statistics for energy stats
+        # summary statistics
         summaryStats <- data.frame(do.call(cbind, lapply(energyStats, summary, digits = 3)))
         summaryStats$stat <- rownames(summaryStats)
         summaryStats <- summaryStats[ , c("stat", "relative_compactness", "surface_area",
                                           "wall_area", "roof_area", "heating_load")]
         colnames(summaryStats) <- c("Stat", "Relative Compactness", "Surface Area",
                                     "Wall Area", "Roof Area", "Heating Load")
-        summaryStats
-    })
-    # Data Exploration: Scatter Plots
-    output$scatterPlot <- renderPlot({
-        ggplot(energyData, aes(x = !!input$scatterVariable, y = heating_load)) +
+        # save summary statistics as reactive value
+        plots$summaryStats <- summaryStats
+        
+        # scatter plot with variable chosen by user
+        plots$scatterPlot <- ggplot(energyData, aes(x = !!input$scatterVariable, y = heating_load)) +
             geom_point(stat = "identity") +
             geom_smooth(data = energyData, aes(x = !!input$scatterVariable, y = heating_load),
                         method = "lm") +
-            labs(x = "Surface Area", y = "Heating Load")
-    })
-    # Data Exploration: Box Plots
-    output$boxPlot <- renderPlot({
+            labs(y = "Heating Load") +
+            coord_cartesian(xlim = ranges$x, ylim = ranges$y, expand = FALSE)
+        
+        # box plot
+        # subset data by heating load range picked by user
         subsetEnergyHL <- subset(energyData,
                                  heating_load >= input$HLRange[1] &
                                  heating_load <= input$HLRange[2])
+        # convert to factor
         subsetEnergyHL$overall_height <- as.factor(subsetEnergyHL$overall_height)
         levels(subsetEnergyHL$overall_height) <- list("Low" = 3.5,
                                                       "High" = 7)
-        
-        # Numerical summaries
+        # save box plot as reactive value
         g <- ggplot(subsetEnergyHL, aes(x = !!input$boxPlotVariable, y = heating_load))
-        g + geom_boxplot() +
+        plots$boxPlot <- g + geom_boxplot() +
             geom_point(aes(col = !!input$boxPlotVariable), alpha = 1, size = 1, position = "jitter") +
             labs(title = "Boxplot for Heating Load by Overall Height or Relative Compactness",
                  y = "Heating Load")
     })
     
-    # Modeling
+    # download code for scatter plot
+    output$downloadScatterPlot <- downloadHandler(
+        filename = "energy-efficiency-scatterplot.png",
+        content = function(file) {
+            ggsave(file, plot = plots$scatterPlot)
+        }
+    )
+    # download code for box plot
+    output$downloadBoxPlot <- downloadHandler(
+        filename = "energy-efficiency-boxplot.png",
+        content = function(file) {
+            ggsave(file, plot = plots$boxPlot)
+        }
+    )
     
-    # About mathJax formulas
+    # render tables and plots
+    output$summaryStats <- renderTable({
+        plots$summaryStats
+    })
+    output$scatterPlot <- renderPlot({
+        plots$scatterPlot
+    })
+    output$boxPlot <- renderPlot({
+        plots$boxPlot
+    })
+    output$corrPlot <- renderPlot({
+        cm <- cor(energyData[, c("relative_compactness", "surface_area", "wall_area",
+                                 "roof_area", "heating_load")])
+        corrplot(round(cm, 2), method="circle")
+    })
+    
+    # zoom code
+    observeEvent(input$plot_dblclick, {
+        brush <- input$plot_brush
+        if (!is.null(brush)) {
+            ranges$x <- c(brush$xmin, brush$xmax)
+            ranges$y <- c(brush$ymin, brush$ymax)
+            
+        } else {
+            ranges$x <- NULL
+            ranges$y <- NULL
+        }
+    })
+    
+    # ------------------------------- Modeling  --------------------------------
+    
+    # About page mathJax() MLR function
     output$MLRFormula <- renderUI({
         withMathJax(
             helpText('Multiple Linear Regression equation:
@@ -92,28 +133,28 @@ shinyServer(function(input, output, session) {
     values <- reactiveValues()
     
     observeEvent(input$fit_model,{
+        # set seed for reproducible
         set.seed(1)
+        # partition data to training and test sets
         energyIndex <- createDataPartition(energyData$heating_load, p = input$trainSize, list = FALSE)
         energyTrain <- energyData[energyIndex, ]
         energyTest <- energyData[-energyIndex, ]
-        
-        # Define training control
+        # define training control and allow user input for # of CV folds
         trctrl <- trainControl(method = "cv", number = input$cvFolds)
         
-        # Set seed for reproducible
-        set.seed(5)
-        
+        # create model formula based on variables user selected
         modelVars <- paste(input$varsToUse, collapse = "+")
         modelFormula <- as.formula(paste('heating_load ~', modelVars))
         
-        # Linear Regression Model
+        # linear regression model fit
+        set.seed(5)
         lmFit <- train(modelFormula,
                        data = select(energyTrain, -c(compactness_level)),
                        method = "lm",
                        preProcess = c("center", "scale"),
                        trControl = trctrl)
         
-        # Boosted Tree Model
+        # boosted tree model fit
         set.seed(5)
         boostFit <- train(modelFormula,
                           data = select(energyTrain, -c(compactness_level)),
@@ -122,9 +163,8 @@ shinyServer(function(input, output, session) {
                           preProcess = c("center", "scale"),
                           verbose = FALSE)
         
-        # Random Forest Model
+        # random forest model fit
         set.seed(5)
-        # Fit the random forest model on training set
         rfFit <- train(modelFormula,
                        data = select(energyTrain, -c(compactness_level)),
                        method = "rf",
@@ -146,9 +186,10 @@ shinyServer(function(input, output, session) {
                                     "Boosted Tree",
                                     "Random Forest")
 
-        # Find the best model with lowest RMSE value
+        # find the best model with lowest RMSE value
         bestModel <- rownames(testResults[testResults$RMSE == min(testResults$RMSE), ])
         
+        # save fit results and comparisons
         values$lmFit <- lmFit
         values$boostFit <- boostFit
         values$rfFit <- rfFit
@@ -156,7 +197,7 @@ shinyServer(function(input, output, session) {
         values$bestModel <- bestModel
     })
     
-    # Output Modeling Results and Comparisons
+    # show modeling results and comparisons
     output$lmFitResults <- renderPrint({
         values$lmFit
     })
@@ -174,8 +215,9 @@ shinyServer(function(input, output, session) {
         values$bestModel
     })
     
-    # Output Predictions
+    # output predictions
     observeEvent(input$predict_values, {
+        # user selected parameter values
         pred_values <- data.frame(
             relative_compactness = input$relative_compactnessPred,
             surface_area = input$surface_areaPred,
@@ -186,9 +228,11 @@ shinyServer(function(input, output, session) {
             glazing_area = as.numeric(input$glazing_areaPred),
             glazing_area_dist = input$glazing_area_distPred
         )
+        # convert to factors
         cols <- c("orientation", "glazing_area_dist")
         pred_values[cols] <- lapply(pred_values[cols], factor)
         
+        # predict heating load
         if (input$modelPredChoice == "Linear Regression") {
             predResult <- predict(values$lmFit, newdata = pred_values)
         } else if (input$modelPredChoice == "Boosted Tree") {
@@ -196,8 +240,10 @@ shinyServer(function(input, output, session) {
         } else if (input$modelPredChoice == "Random Forest") {
             predResult <- predict(values$rfFit, newdata = pred_values)
         }
+        # save prediction as reactive value
         values$predResult <- predResult
     })
+    # show prediction result
     output$prediction <- renderText({
         values$predResult
     })

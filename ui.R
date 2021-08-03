@@ -1,11 +1,10 @@
-library(shiny)
-
+# include code from external file
 source('helpers.R')
 
-# Define UI for application that draws a histogram
 shinyUI(fluidPage(
-    # Application title
+    # application title
     titlePanel("Energy Efficiency in Buildings"),
+    # top-level navigation
     navbarPage("Navigate",
         tabPanel("About",
                  h3("Purpose of App"),
@@ -55,26 +54,56 @@ shinyUI(fluidPage(
         tabPanel("Data Exploration",
                  sidebarLayout(
                      sidebarPanel(
+                         # select which plot to display
                          selectInput("plots",
                                      "Choose Summary/Plot",
                                      choices = c("Summary Statistics" = "summary_stats",
                                                  "Scatter Plot" = "scatter",
-                                                 "Box Plot" = "box"),
-                                     selected = NULL)
+                                                 "Box Plot" = "box",
+                                                 "Correlation Plot" = "corrplot"),
+                                     selected = NULL),
+                         actionButton("plotRun", "Plot")
                      ),
-                     # show chosen plot or summary
                      mainPanel(
+                         # show chosen plot or summary
                          conditionalPanel(
                              condition = "input.plots == 'summary_stats'",
+                             # display summary statistics
+                             h3("Summary Statistics"),
+                             hr(),
                              tableOutput("summaryStats")
                          ),
                          conditionalPanel(
                              condition =  "input.plots == 'scatter'",
+                             # plot scatter plot
+                             h3("Scatterplot"),
+                             hr(),
+                             p("Select variable below and click Plot."),
+                             p("To zoom in: drag inside the plot to create a zoom area,
+                               double-click the zoom area, click Plot button in side panel.
+                               To reset the plot, double-click on plot and press Plot."),
+                             hr(),
+                             # variable selection
                              varSelectInput("scatterVariable", "Variable:", energyData[, c(1:4)]),
-                             plotOutput("scatterPlot")
+                             # allow for zooming
+                             plotOutput("scatterPlot", height = 300,
+                                        dblclick = "plot_dblclick",
+                                        brush = brushOpts(
+                                            id = "plot_brush",
+                                            resetOnNew = TRUE
+                                        )
+                             ),
+                             # download plot
+                             downloadButton("downloadScatterPlot", "Download Plot")
                          ),
                          conditionalPanel(
                              condition =  "input.plots == 'box'",
+                             # plot boxplot
+                             h3("Box Plot"),
+                             hr(),
+                             p("Toggle heating load, select variable below, and click Plot."),
+                             hr(),
+                             # toggle parameter values
                              sliderInput("HLRange", "Toggle Heating Load",
                                          min = floor(min(energyData$heating_load)),
                                          max = ceiling(max(energyData$heating_load)),
@@ -82,8 +111,19 @@ shinyUI(fluidPage(
                                                    quantile(energyData$heating_load)[4]),
                                          step = 2
                              ),
+                             # variable selection
                              varSelectInput("boxPlotVariable", "Variable:", energyData[, c(5, 10)]),
-                             plotOutput("boxPlot")
+                             plotOutput("boxPlot"),
+                             # download plot
+                             downloadButton("downloadBoxPlot", "Download Plot"),
+                             br(), br()
+                         ),
+                         conditionalPanel(
+                             condition =  "input.plots == 'corrplot'",
+                             # show correlations
+                             h3("Correlation Plot"),
+                             hr(),
+                             plotOutput("corrPlot")
                          )
                      )
                  )
@@ -106,10 +146,10 @@ shinyUI(fluidPage(
                                 variables has on the response variable. This means multiple linear
                                 regression models are easy to interpret. Another advantage is that 
                                 modeling multiple linear regression is very fast because it doesn't
-                                involve too many calculations. This is especially useful if the dataset
-                                is too large. Several drawbacks include: MLR assumes homoskedacity,
-                                is too simplistic when dealing with complex real-world data, and
-                                tends to be affected by outliers easily."),
+                                involve too many calculations. This is especially useful if the
+                                dataset is too large. Several drawbacks include: MLR assumes
+                                homoskedacity, is too simplistic when dealing with complex real-world
+                                data, and tends to be affected by outliers easily."),
                               h3("Regression Tree"),
                               p("Tree-based methods involve splitting predictor spaces into regions,
                                 and there are different predictions for each region. We use a
@@ -143,10 +183,12 @@ shinyUI(fluidPage(
                               sidebarLayout(
                                   sidebarPanel(
                                       h3("Options"),
+                                      # toggle model fitting options
                                       sliderInput("trainSize", "Choose Train Set Size:",
                                                   min = 0, max = 1, value = 0.7),
                                       numericInput("cvFolds", "Number of Cross-Validation Folds",
                                                    value = 10),
+                                      # variable selection
                                       checkboxGroupInput("varsToUse",
                                                          "Choose Variables for Model. All variables
                                                          selected by default. Un-check variables you
@@ -174,7 +216,8 @@ shinyUI(fluidPage(
                                       h3("Model Fitting"),
                                       hr(),
                                       p("Note: The NULL values are placeholders until model fitting
-                                        is complete. Model fitting may take up to a minute."),
+                                        is complete. Model fitting typically takes less than 30
+                                        seconds when CV fold is set to 10."),
                                       hr(),
                                       h4("Linear Regression Model Fit Result Summary"),
                                       verbatimTextOutput("lmFitResults"),
@@ -193,6 +236,7 @@ shinyUI(fluidPage(
                               sidebarLayout(
                                   sidebarPanel(
                                       h3("Options"),
+                                      # input parameter values in order to predict heating load
                                       selectInput("modelPredChoice",
                                                    "Choose Model",
                                                    choices = c("Linear Regression",
