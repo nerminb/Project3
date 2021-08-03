@@ -78,6 +78,11 @@ shinyUI(fluidPage(
                              # plot scatter plot
                              h3("Scatterplot"),
                              hr(),
+                             p("Scatterplots show us relationships between two parameters.
+                               The plot allows us to visually notice any positive or negative
+                               relationships between parameters as well as the strength of the
+                               relationship."),
+                             hr(),
                              p("Select variable below and click Plot."),
                              p("To zoom in: drag inside the plot to create a zoom area,
                                double-click the zoom area, click Plot button in side panel.
@@ -101,6 +106,11 @@ shinyUI(fluidPage(
                              # plot boxplot
                              h3("Box Plot"),
                              hr(),
+                             p("Box plots shows us the overall spread and variability of
+                             the data. Summary statistics are mapped, like mean, minimum,
+                             maximum, and interquartile ranges. We can notice any outliers
+                             by looking at the farthest dots in the plot."),
+                             hr(),
                              p("Toggle heating load, select variable below, and click Plot."),
                              hr(),
                              # toggle parameter values
@@ -122,6 +132,11 @@ shinyUI(fluidPage(
                              condition =  "input.plots == 'corrplot'",
                              # show correlations
                              h3("Correlation Plot"),
+                             hr(),
+                             p("We are able to see relationships between each parameter which
+                             each other in the below correlation matrix. Blue color indicates a
+                             positive effect between two parameters and red color indicates a
+                             negative effect"),
                              hr(),
                              plotOutput("corrPlot")
                          )

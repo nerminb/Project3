@@ -7,7 +7,7 @@ This app analyzes energy efficiency in buildings using a host of building parame
 ### Install Packages
 
 ```{r}
-install.packages(c("shiny", "tidyverse", "dplyr", "ggplot2", "caret", "DT"))
+install.packages(c("shiny", "tidyverse", "dplyr", "ggplot2", "caret", "DT", "corrplot"))
 ```
 
 ### Packages required to run app
